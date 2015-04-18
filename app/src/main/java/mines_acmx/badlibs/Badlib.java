@@ -1,5 +1,6 @@
 package mines_acmx.badlibs;
 
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Environment;
 import android.provider.ContactsContract;
@@ -17,9 +18,18 @@ import android.widget.TextView;
 import android.content.res.AssetManager;
 import android.net.Uri;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
 import java.util.Random;
 import java.util.ArrayList;
 import java.io.InputStreamReader;
@@ -38,30 +48,81 @@ public class Badlib extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         initiateLists();
+        rewriteLists();
+        initiateLists();
         setContentView(R.layout.activity_badlib);
     }
 
-    private void initiateLists(){
-        //nouns = new ArrayList<String>(Arrays.asList("turtle", "hat", "pig", "Mason"));
+    @Override
+    protected void onStop() {
+        super.onStop();
+        rewriteLists();
+    }
 
-        TextView textView = (TextView) findViewById(R.id.textView);
-        textView.setText("Press the Generate Button to Generate a New BadLib!");
+    private void rewriteLists(){
+        try {
+            AssetManager am = getAssets();
+            OutputStreamWriter out = new OutputStreamWriter(openFileOutput("words.txt", Context.MODE_PRIVATE));
+            for(String s: names)
+                out.write(s + "\n");
+            out.write(":noun\n");
+            out.write("dog\n");
+            //for(String s : nouns)
+                //out.write(s + "\n");
+            out.write(":verb\n");
+            for(String s : verbs)
+                out.write(s + "\n");
+            out.write(":adverb\n");
+            for(String s : adverbs)
+                out.write(s + "\n");
+            out.write(":adjective\n");
+            for(String s : adjectives)
+                out.write(s + "\n");
+            out.close();
+        } catch(IOException e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void ensureDictionary(){
+        try {
+            FileInputStream fis = openFileInput("words.txt");
+            return;
+        }catch(FileNotFoundException e){
+        }
+        try {
+            AssetManager am = getAssets();
+            InputStream is = am.open("words.txt");
+            BufferedReader fromAssets = new BufferedReader(new InputStreamReader(is));
+            PrintWriter toInternal = new PrintWriter("words.txt");
+            while(fromAssets.ready()){
+                toInternal.println(fromAssets.readLine());
+            }
+        }catch(IOException e){
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void initiateLists(){
         nouns = new ArrayList<String>();
         verbs = new ArrayList<String>();
         adverbs = new ArrayList<String>();
         adjectives = new ArrayList<String>();
         names = new ArrayList<String>();
+        BufferedReader br;
 
         try {
             AssetManager am = getAssets();
             InputStream is = am.open("words.txt");
-            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            br = new BufferedReader(new InputStreamReader(is));
             String line;
             line = br.readLine();
             ArrayList<String> currentList = names;
             while (br.ready()) {
                 line = br.readLine();
-                if(line.length() > 0 && line.charAt(0) == ':') {
+                if(line.length() == 0)  // empty string read
+                    continue;   // do nothing with it
+                if(line.charAt(0) == ':') {
                     switch (line) {
                         case ":noun":
                             currentList = nouns;
@@ -77,8 +138,7 @@ public class Badlib extends ActionBarActivity {
                             break;
                     }
                 }else{
-                    if(!line.isEmpty())
-                        currentList.add(line);
+                    currentList.add(line);
                 }
             }
 
@@ -87,7 +147,7 @@ public class Badlib extends ActionBarActivity {
             System.out.println(e.getMessage());
         }
 
-        loadContactNames();
+        // loadContactNames();
     }
 
     private void loadContactNames() {
@@ -107,12 +167,12 @@ public class Badlib extends ActionBarActivity {
     }
 
     private String generateBadlib() {
-        String toReturn = names.get(rand.nextInt(names.size())) + "\n";
-        toReturn += adverbs.get(rand.nextInt(adverbs.size())) + "\n";
-        toReturn += verbs.get(rand.nextInt(verbs.size())) + "\n";
-        toReturn += names.get(rand.nextInt(names.size())) + "'s\n";
-        toReturn += adjectives.get(rand.nextInt(adjectives.size())) + "\n";
-        toReturn += nouns.get(rand.nextInt(nouns.size())) + "\n";
+        String toReturn = names.get(rand.nextInt(names.size())) + " ";
+        toReturn += adverbs.get(rand.nextInt(adverbs.size())) + " ";
+        toReturn += verbs.get(rand.nextInt(verbs.size())) + " ";
+        toReturn += names.get(rand.nextInt(names.size())) + "'s ";
+        toReturn += adjectives.get(rand.nextInt(adjectives.size())) + " ";
+        toReturn += nouns.get(rand.nextInt(nouns.size())) + " ";
         return toReturn;
     }
 
