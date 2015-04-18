@@ -2,23 +2,24 @@ package mines_acmx.badlibs;
 
 import android.content.DialogInterface;
 import android.os.Environment;
+import android.provider.ContactsContract;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.database.Cursor;
 
 import android.widget.Button;
 import android.view.View.OnClickListener;
 import android.view.View;
 import android.widget.TextView;
 import android.content.res.AssetManager;
-import android.content.Context;
+import android.net.Uri;
 
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.IOException;
-import java.io.File;
 import java.util.Random;
 import java.util.ArrayList;
 import java.io.InputStreamReader;
@@ -42,12 +43,14 @@ public class Badlib extends ActionBarActivity {
 
     private void initiateLists(){
         //nouns = new ArrayList<String>(Arrays.asList("turtle", "hat", "pig", "Mason"));
+
+        TextView textView = (TextView) findViewById(R.id.textView);
+        textView.setText("Press the Generate Button to Generate a New BadLib!");
         nouns = new ArrayList<String>();
         verbs = new ArrayList<String>();
         adverbs = new ArrayList<String>();
         adjectives = new ArrayList<String>();
         names = new ArrayList<String>();
-
 
         try {
             AssetManager am = getAssets();
@@ -83,6 +86,24 @@ public class Badlib extends ActionBarActivity {
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
+
+        loadContactNames();
+    }
+
+    private void loadContactNames() {
+        // for each contact in the contact list, add it to names ArrayList
+        Uri uri = ContactsContract.Contacts.CONTENT_URI;
+        String[] projection = new String[] {ContactsContract.Contacts._ID, ContactsContract.Contacts.DISPLAY_NAME};
+        String selection = ContactsContract.Contacts.IN_VISIBLE_GROUP + " = '" + ("1") + "'";
+        String[] selectionArgs = null;
+        String sortOrder = ContactsContract.Contacts.DISPLAY_NAME + " COLLATE LOCALIZED ASC";
+        Cursor cursor = managedQuery(uri, projection, selection, selectionArgs, sortOrder);
+
+        while(cursor.moveToNext()) {
+            String displayName = cursor.getString(cursor.getColumnIndex(ContactsContract.Data.DISPLAY_NAME));
+            if(!displayName.contains("@"))
+                names.add(displayName);
+        }
     }
 
     private String generateBadlib() {
@@ -92,7 +113,6 @@ public class Badlib extends ActionBarActivity {
         toReturn += names.get(rand.nextInt(names.size())) + "'s\n";
         toReturn += adjectives.get(rand.nextInt(adjectives.size())) + "\n";
         toReturn += nouns.get(rand.nextInt(nouns.size())) + "\n";
-        
         return toReturn;
     }
 
